@@ -9,7 +9,7 @@
 import SpriteKit
 import GameplayKit
 
-class GameScene: SKScene {
+class GameScene: SKScene, SKPhysicsContactDelegate {
     
     var whalePlayer = SKSpriteNode()
     var landRight = SKSpriteNode()
@@ -20,17 +20,50 @@ class GameScene: SKScene {
     var lakeMinX = CGFloat()
     var lakeMaxX = CGFloat()
     
+    var timePassed = Int()
+    var calcScore = Int()
+    var score = SKLabelNode()
+    //var maxScore = Int()
+        
     override func didMove(to view: SKView) {
         self.anchorPoint = CGPoint(x: 0.5, y: 0.5)
         setUp()
+        physicsWorld.contactDelegate = self
         Timer.scheduledTimer(timeInterval: TimeInterval(0.5), target: self, selector: #selector(GameScene.createLakeWave), userInfo: nil, repeats: true)
         Timer.scheduledTimer(timeInterval: TimeInterval(1), target: self, selector: #selector(GameScene.treeObstacles), userInfo: nil, repeats: true)
+        Timer.scheduledTimer(timeInterval: 1, target: self,   selector: (#selector(GameScene.updateTimer)), userInfo: nil, repeats: true)
     }
     
     override func update(_ currentTime: TimeInterval) {
         showLakeWave()
-        //showTrees()
         removeItems()
+    }
+    
+    @objc func updateTimer() {
+        timePassed += 1
+        
+        calcScore += (10 * timePassed)
+        score.text = "Score: \(calcScore)"
+    }
+    
+    func didBegin(_ contact: SKPhysicsContact) {
+        var firstBody = SKPhysicsBody()
+        //var secondBody = SKPhysicsBody()
+        
+        if contact.bodyA.node?.name == "whalePlayer" {
+            firstBody = contact.bodyA
+            //secondBody = contact.bodyB
+        } else {
+            firstBody = contact.bodyB
+            //secondBody = contact.bodyA
+        }
+        firstBody.node?.removeFromParent()
+        
+//        if maxScore < calcScore {
+//            maxScore = calcScore
+//        }
+        
+        afterCollision()
     }
     
     func setUp() {
@@ -38,11 +71,20 @@ class GameScene: SKScene {
         landRight = self.childNode(withName: "landRight") as! SKSpriteNode
         landLeft = self.childNode(withName: "landLeft") as! SKSpriteNode
         
+        score = self.childNode(withName: "score") as! SKLabelNode
+        score.position.x = -(UIScreen.main.bounds.maxX - CGFloat(180))
+        score.position.y = UIScreen.main.bounds.maxY - CGFloat(250)
+        score.zPosition = 20
+        
         landRight.zPosition = 10
         landLeft.zPosition = 10
         
         lakeMaxX = UIScreen.main.bounds.maxX - landRight.size.width
         lakeMinX = -lakeMaxX
+        
+        whalePlayer.physicsBody?.categoryBitMask = ColliderType.PLAYER_COLLIDER
+        whalePlayer.physicsBody?.contactTestBitMask = ColliderType.ITEM_COLLIDER
+        whalePlayer.physicsBody?.collisionBitMask = 0
     }
     
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -109,6 +151,11 @@ class GameScene: SKScene {
             let tree = treeSmall as! SKSpriteNode
             tree.position.y -= 10
         })
+        
+        enumerateChildNodes(withName: "mediumTreeL", using: { (treeSmall, stop) in
+            let tree = treeSmall as! SKSpriteNode
+            tree.position.y -= 10
+        })
     }
     
     @objc func treeObstacles() {
@@ -148,7 +195,7 @@ class GameScene: SKScene {
             break
         case 9...12:
             tree = SKSpriteNode(texture: SKTexture.init(imageNamed: "treeMediumLeft"))
-            tree.name = "mediumTreeR"
+            tree.name = "mediumTreeL"
             tree.size.width = 300
             tree.size.height = 60
             
@@ -179,18 +226,11 @@ class GameScene: SKScene {
         }
         tree.anchorPoint = CGPoint(x: 0.5, y: 0.5)
         tree.zPosition = 10
-        
-//        let randomN = Int.random(in: 1...12)
-//        switch randomN {
-//        case 1...4:
-//            tree.position.x = lakeMaxX - tree.size.width/2
-//        case 5...8:
-//            tree.position.x = lakeMinX + tree.size.width/2
-//        default:
-//            tree.position.x = 0
-//        }
-        
         tree.position.y = 700
+        tree.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: (tree.size.width - 20), height: (tree.size.height - 20)))
+        tree.physicsBody?.categoryBitMask = ColliderType.ITEM_COLLIDER
+        tree.physicsBody?.collisionBitMask = 0
+        tree.physicsBody?.affectedByGravity = false
         addChild(tree)
     }
     
@@ -199,6 +239,13 @@ class GameScene: SKScene {
             if child.position.y < -self.size.height - 100 {
                 child.removeFromParent()
             }
+        }
+    }
+    
+    func afterCollision() {
+        if let menuScene = SKScene(fileNamed: "GameMenu") {
+            menuScene.scaleMode = .aspectFill
+            view?.presentScene(menuScene, transition: SKTransition.moveIn(with: SKTransitionDirection.right, duration: TimeInterval(1)))
         }
     }
 }
