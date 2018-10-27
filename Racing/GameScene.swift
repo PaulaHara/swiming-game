@@ -23,6 +23,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var timePassed = Int()
     var calcScore = Int()
     var score = SKLabelNode()
+    var velocity = CGFloat(10)
     //var maxScore = Int()
         
     override func didMove(to view: SKView) {
@@ -42,7 +43,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     @objc func updateTimer() {
         timePassed += 1
         
-        calcScore += (10 * timePassed)
+        calcScore += (5 * timePassed)
         score.text = "Score: \(calcScore)"
     }
     
@@ -134,103 +135,109 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             if randomNum == 2 {
                 wave.position.x += 5
             }
-            
         })
         
         enumerateChildNodes(withName: "smallTreeR", using: { (treeSmall, stop) in
             let tree = treeSmall as! SKSpriteNode
-            tree.position.y -= 10
+            tree.position.y -= self.velocity + CGFloat(self.timePassed/10)
         })
         
         enumerateChildNodes(withName: "smallTreeL", using: { (treeSmall, stop) in
             let tree = treeSmall as! SKSpriteNode
-            tree.position.y -= 10
+            tree.position.y -= self.velocity
         })
         
         enumerateChildNodes(withName: "mediumTreeR", using: { (treeSmall, stop) in
             let tree = treeSmall as! SKSpriteNode
-            tree.position.y -= 10
+            tree.position.y -= self.velocity
         })
         
         enumerateChildNodes(withName: "mediumTreeL", using: { (treeSmall, stop) in
             let tree = treeSmall as! SKSpriteNode
-            tree.position.y -= 10
+            tree.position.y -= self.velocity
         })
     }
     
     @objc func treeObstacles() {
-        let tree : SKSpriteNode!
-        let randomNumber = Int.random(in: 1...16)
+        let randomNumber = Int.random(in: 1...45)
         
         switch randomNumber {
-        case 1...4:
-            tree = SKSpriteNode(texture: SKTexture.init(imageNamed: "treeShortRight"))
-            tree.name = "smallTreeR"
-            tree.size.width = 110
-            tree.size.height = 60
-            
-            let randomN = Int.random(in: 1...8)
-            switch randomN {
-            case 1...4:
-                tree.position.x = lakeMaxX - tree.size.width/2
-            default:
-                tree.position.x = 0
-            }
-            
+        case 1...5:
+            createTree(treeName: "smallTreeR", treeImgName: "treeShortRight", widthSize: CGFloat(110), positionX: nil, calcPositionX: true)
             break
-        case 5...8:
-            tree = SKSpriteNode(texture: SKTexture.init(imageNamed: "treeShortLeft"))
-            tree.name = "smallTreeL"
-            tree.size.width = 110
-            tree.size.height = 60
-            
-            let randomN = Int.random(in: 1...8)
-            switch randomN {
-            case 1...4:
-                tree.position.x = lakeMinX + tree.size.width/2
-            default:
-                tree.position.x = 0
-            }
-            
+        case 6...10:
+            createTree(treeName: "smallTreeL", treeImgName: "treeShortLeft", widthSize: CGFloat(110), positionX: nil, calcPositionX: true)
             break
-        case 9...12:
-            tree = SKSpriteNode(texture: SKTexture.init(imageNamed: "treeMediumLeft"))
-            tree.name = "mediumTreeL"
-            tree.size.width = 300
-            tree.size.height = 60
-            
-            let randomN = Int.random(in: 1...8)
-            switch randomN {
-            case 1...4:
-                tree.position.x = lakeMinX + tree.size.width/2
-            default:
-                tree.position.x = 0
-            }
-            
+        case 11...15:
+            createTree(treeName: "mediumTreeR", treeImgName: "treeMediumRight", widthSize: CGFloat(300), positionX: nil, calcPositionX: true)
+            break
+        case 16...20:
+            createTree(treeName: "smallTreeR", treeImgName: "treeShortRight", widthSize: CGFloat(110), positionX: lakeMaxX - CGFloat(110)/2, calcPositionX: false)
+            createTree(treeName: "smallTreeL", treeImgName: "treeShortLeft", widthSize: CGFloat(110), positionX: lakeMinX + CGFloat(110)/2, calcPositionX: false)
+            break
+        case 21...25:
+            createTree(treeName: "smallTreeR", treeImgName: "treeShortRight", widthSize: CGFloat(110), positionX: lakeMaxX - CGFloat(110)/2, calcPositionX: false)
+            createTree(treeName: "smallTreeL", treeImgName: "treeShortLeft", widthSize: CGFloat(110), positionX: 0, calcPositionX: false)
+            break
+        case 22...30:
+            createTree(treeName: "smallTreeR", treeImgName: "treeShortRight", widthSize: CGFloat(110), positionX: 0, calcPositionX: false)
+            createTree(treeName: "smallTreeL", treeImgName: "treeShortLeft", widthSize: CGFloat(110), positionX: lakeMinX + CGFloat(110)/2, calcPositionX: false)
+            break
+        case 31...35:
+            createTree(treeName: "smallTreeR", treeImgName: "treeShortRight", widthSize: CGFloat(110), positionX: lakeMaxX - CGFloat(110)/2, calcPositionX: false)
+            createTree(treeName: "mediumTreeL", treeImgName: "treeMediumLeft", widthSize: CGFloat(300), positionX: lakeMinX + CGFloat(300)/2, calcPositionX: false)
+            break
+        case 36...40:
+            createTree(treeName: "smallTreeL", treeImgName: "treeShortLeft", widthSize: CGFloat(110), positionX: lakeMinX + CGFloat(110)/2, calcPositionX: false)
+            createTree(treeName: "mediumTreeR", treeImgName: "treeMediumRight", widthSize: CGFloat(300), positionX: lakeMaxX - CGFloat(300)/2, calcPositionX: false)
             break
         default:
-            tree = SKSpriteNode(texture: SKTexture.init(imageNamed: "treeMediumRight"))
-            tree.name = "mediumTreeR"
-            tree.size.width = 300
-            tree.size.height = 60
-            
-            let randomN = Int.random(in: 1...8)
+            createTree(treeName: "mediumTreeL", treeImgName: "treeMediumLeft", widthSize: CGFloat(300), positionX: nil, calcPositionX: true)
+            break
+        }
+    }
+    
+    func createTree(treeName: String, treeImgName: String, widthSize: CGFloat, positionX: CGFloat?, calcPositionX: Bool){
+        let tree: SKSpriteNode!
+        
+        tree = SKSpriteNode(texture: SKTexture.init(imageNamed: treeImgName))
+        tree.name = treeName
+        tree.size.height = 60
+        tree.size.width = widthSize
+        
+        if calcPositionX {
+            let randomN = Int.random(in: 1...15)
             switch randomN {
-            case 1...4:
-                tree.position.x = lakeMaxX - tree.size.width/2
+            case 1...5:
+                if treeName.range(of: "R") != nil {
+                    tree.position.x = lakeMaxX - widthSize/2
+                } else if treeName.range(of: "L") != nil {
+                    tree.position.x = lakeMinX + widthSize/2
+                }
+            case 6...10:
+                if treeName.range(of: "R") != nil && treeName.range(of: "small") != nil {
+                    tree.position.x = lakeMaxX - widthSize/2 - whalePlayer.size.width - CGFloat(randomN)*10
+                } else if treeName.range(of: "L") != nil && treeName.range(of: "small") != nil {
+                    tree.position.x = lakeMinX + widthSize/2 + whalePlayer.size.width + CGFloat(randomN)*10
+                } else {
+                    fallthrough
+                }
             default:
                 tree.position.x = 0
             }
-            
-            break
+        } else {
+            tree.position.x = positionX!
         }
+        
         tree.anchorPoint = CGPoint(x: 0.5, y: 0.5)
         tree.zPosition = 10
         tree.position.y = 700
+        
         tree.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: (tree.size.width - 20), height: (tree.size.height - 20)))
         tree.physicsBody?.categoryBitMask = ColliderType.ITEM_COLLIDER
         tree.physicsBody?.collisionBitMask = 0
         tree.physicsBody?.affectedByGravity = false
+        
         addChild(tree)
     }
     
