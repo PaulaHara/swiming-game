@@ -13,3 +13,7 @@ struct ColliderType {
     static let ITEM_COLLIDER : UInt32 = 1
     static let ITEM_COLLIDER_1 : UInt32 = 2
 }
+
+struct ScoreType {
+    static var highScore = 0
+}

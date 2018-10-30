@@ -8,23 +8,30 @@
 
 import SpriteKit
 import GameplayKit
+import AVFoundation
 
 class GameScene: SKScene, SKPhysicsContactDelegate {
     
     var whalePlayer = SKSpriteNode()
     var landRight = SKSpriteNode()
     var landLeft = SKSpriteNode()
+    var donut = SKSpriteNode()
     
     var location = CGPoint(x: 0, y: 0)
     
     var lakeMinX = CGFloat()
     var lakeMaxX = CGFloat()
+    var lakeMaxY = CGFloat()
     
     var timePassed = Int()
     var calcScore = Int()
     var score = SKLabelNode()
     var velocity = CGFloat(10)
-    //var maxScore = Int()
+    var maxScore = Int()
+    var obstaclesPassed = Int()
+    
+    var audioPlayer: AVAudioPlayer?
+    var soundEffects: AVAudioPlayer?
         
     override func didMove(to view: SKView) {
         self.anchorPoint = CGPoint(x: 0.5, y: 0.5)
@@ -32,39 +39,85 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         physicsWorld.contactDelegate = self
         Timer.scheduledTimer(timeInterval: TimeInterval(0.5), target: self, selector: #selector(GameScene.createLakeWave), userInfo: nil, repeats: true)
         Timer.scheduledTimer(timeInterval: TimeInterval(1), target: self, selector: #selector(GameScene.treeObstacles), userInfo: nil, repeats: true)
-        Timer.scheduledTimer(timeInterval: 1, target: self,   selector: (#selector(GameScene.updateTimer)), userInfo: nil, repeats: true)
+        Timer.scheduledTimer(timeInterval: TimeInterval(3), target: self, selector: #selector(GameScene.createDonut), userInfo: nil, repeats: true)
+        Timer.scheduledTimer(timeInterval: TimeInterval(1), target: self, selector: (#selector(GameScene.updateTimer)), userInfo: nil, repeats: true)
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { // Will delay for 1 second the starting of the music
+            if let path = Bundle.main.path(forResource: "Gameplay-Music", ofType: ".mp3") {
+                let url = URL(fileURLWithPath: path)
+                self.audioPlayer = try? AVAudioPlayer(contentsOf: url)
+                
+                if let player = self.audioPlayer {
+                    player.play()
+                    player.numberOfLoops = -1
+                }
+            }
+        }
     }
     
     override func update(_ currentTime: TimeInterval) {
-        showLakeWave()
+        showGameObjects()
         removeItems()
     }
     
     @objc func updateTimer() {
         timePassed += 1
         
-        calcScore += (5 * timePassed)
+        calcScore += 5
+        updateScoreText()
+    }
+    
+    func updateScoreText() {
         score.text = "Score: \(calcScore)"
+    }
+    
+    func playSoundEffects(soundName: String, type: String) {
+        if let path = Bundle.main.path(forResource: soundName, ofType: type) {
+            let url = URL(fileURLWithPath: path)
+            soundEffects = try? AVAudioPlayer(contentsOf: url)
+            
+            if let sfx = soundEffects {
+                sfx.volume = Float(5)
+                sfx.play()
+            }
+        }
     }
     
     func didBegin(_ contact: SKPhysicsContact) {
         var firstBody = SKPhysicsBody()
-        //var secondBody = SKPhysicsBody()
+        var gotADonut = false
         
-        if contact.bodyA.node?.name == "whalePlayer" {
+        if contact.bodyA.node?.name == "whalePlayer" && contact.bodyB.node?.name == "donut" {
+            firstBody = contact.bodyB
+            gotADonut = true
+        } else if contact.bodyA.node?.name == "donut" && contact.bodyB.node?.name == "whalePlayer" {
             firstBody = contact.bodyA
-            //secondBody = contact.bodyB
+            gotADonut = true
+        } else if contact.bodyA.node?.name == "whalePlayer" {
+            firstBody = contact.bodyA
         } else {
             firstBody = contact.bodyB
-            //secondBody = contact.bodyA
         }
         firstBody.node?.removeFromParent()
         
-//        if maxScore < calcScore {
-//            maxScore = calcScore
-//        }
-        
-        afterCollision()
+        if !gotADonut { // Player hit a tree
+            playSoundEffects(soundName: "demage-sound", type: ".mp3")
+            
+            maxScore = ScoreType.highScore
+            if maxScore < calcScore {
+                ScoreType.highScore = calcScore
+            }
+            
+            if let player = audioPlayer {
+                player.stop()
+            }
+            afterCollision()
+        } else { // Player got a donut
+            playSoundEffects(soundName: "coin-sound", type: ".mp3")
+            
+            calcScore += 50
+            updateScoreText()
+        }
     }
     
     func setUp() {
@@ -82,6 +135,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         lakeMaxX = UIScreen.main.bounds.maxX - landRight.size.width
         lakeMinX = -lakeMaxX
+        lakeMaxY = UIScreen.main.bounds.maxY
         
         whalePlayer.physicsBody?.categoryBitMask = ColliderType.PLAYER_COLLIDER
         whalePlayer.physicsBody?.contactTestBitMask = ColliderType.ITEM_COLLIDER
@@ -119,14 +173,14 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             lakeWave.position.x = 0
         }
         
-        lakeWave.position.y = 700
+        lakeWave.position.y = lakeMaxY
         addChild(lakeWave)
     }
     
-    func showLakeWave() {
+    func showGameObjects() {
         enumerateChildNodes(withName: "lakeWave", using: { (lakeWave, stop) in
           let wave = lakeWave as! SKShapeNode
-            wave.position.y -= 20
+            wave.position.y -= 20 + CGFloat(self.timePassed/10)
             
             let randomNum = Int.random(in: 1...2)
             if randomNum == 1 {
@@ -144,22 +198,27 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         enumerateChildNodes(withName: "smallTreeL", using: { (treeSmall, stop) in
             let tree = treeSmall as! SKSpriteNode
-            tree.position.y -= self.velocity
+            tree.position.y -= self.velocity + CGFloat(self.timePassed/10)
         })
         
-        enumerateChildNodes(withName: "mediumTreeR", using: { (treeSmall, stop) in
-            let tree = treeSmall as! SKSpriteNode
-            tree.position.y -= self.velocity
+        enumerateChildNodes(withName: "mediumTreeR", using: { (treeMedium, stop) in
+            let tree = treeMedium as! SKSpriteNode
+            tree.position.y -= self.velocity + CGFloat(self.timePassed/10)
         })
         
-        enumerateChildNodes(withName: "mediumTreeL", using: { (treeSmall, stop) in
-            let tree = treeSmall as! SKSpriteNode
-            tree.position.y -= self.velocity
+        enumerateChildNodes(withName: "mediumTreeL", using: { (treeMedium, stop) in
+            let tree = treeMedium as! SKSpriteNode
+            tree.position.y -= self.velocity + CGFloat(self.timePassed/10)
+        })
+        
+        enumerateChildNodes(withName: "donut", using: { (prize, stop) in
+            let donut = prize as! SKSpriteNode
+            donut.position.y -= self.velocity + CGFloat(self.timePassed/10)
         })
     }
     
     @objc func treeObstacles() {
-        let randomNumber = Int.random(in: 1...45)
+        let randomNumber = Int.random(in: 1...50)
         
         switch randomNumber {
         case 1...5:
@@ -190,6 +249,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         case 36...40:
             createTree(treeName: "smallTreeL", treeImgName: "treeShortLeft", widthSize: CGFloat(110), positionX: lakeMinX + CGFloat(110)/2, calcPositionX: false)
             createTree(treeName: "mediumTreeR", treeImgName: "treeMediumRight", widthSize: CGFloat(300), positionX: lakeMaxX - CGFloat(300)/2, calcPositionX: false)
+            break
+        case 41...45:
+            createTree(treeName: "smallTreeR", treeImgName: "treeShortRight", widthSize: CGFloat(110), positionX: lakeMaxX - CGFloat(110)/2, calcPositionX: false)
+            createTree(treeName: "smallTreeL", treeImgName: "treeShortLeft", widthSize: CGFloat(110), positionX: 0, calcPositionX: false)
+            createTree(treeName: "smallTreeL", treeImgName: "treeShortLeft", widthSize: CGFloat(110), positionX: lakeMinX + CGFloat(110)/2, calcPositionX: false)
             break
         default:
             createTree(treeName: "mediumTreeL", treeImgName: "treeMediumLeft", widthSize: CGFloat(300), positionX: nil, calcPositionX: true)
@@ -231,7 +295,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         tree.anchorPoint = CGPoint(x: 0.5, y: 0.5)
         tree.zPosition = 10
-        tree.position.y = 700
+        tree.position.y = lakeMaxY
         
         tree.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: (tree.size.width - 20), height: (tree.size.height - 20)))
         tree.physicsBody?.categoryBitMask = ColliderType.ITEM_COLLIDER
@@ -241,10 +305,39 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         addChild(tree)
     }
     
+    @objc func createDonut() {
+        let donutPrize = SKSpriteNode(texture: SKTexture(imageNamed: "donut"))
+        donutPrize.size.width = 50
+        donutPrize.size.height = 50
+        donutPrize.name = "donut"
+        
+        let randomN = Int.random(in: 1...15)
+        switch randomN {
+        case 1...5:
+            donutPrize.position.x = lakeMinX + donutPrize.size.width
+        case 6...10:
+            donutPrize.position.x = lakeMaxX - donutPrize.size.width
+        default:
+            donutPrize.position.x = 0
+        }
+        
+        donutPrize.anchorPoint = CGPoint(x: 0.5, y: 0.5)
+        donutPrize.zPosition = 10
+        donutPrize.position.y = lakeMaxY + donutPrize.size.height + 10
+        
+        donutPrize.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: (donutPrize.size.width - 20), height: (donutPrize.size.height - 20)))
+        donutPrize.physicsBody?.categoryBitMask = ColliderType.ITEM_COLLIDER
+        donutPrize.physicsBody?.collisionBitMask = 0
+        donutPrize.physicsBody?.affectedByGravity = false
+        
+        addChild(donutPrize)
+    }
+    
     func removeItems() {
         for child in children {
             if child.position.y < -self.size.height - 100 {
                 child.removeFromParent()
+                calcScore += 1
             }
         }
     }
@@ -252,7 +345,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     func afterCollision() {
         if let menuScene = SKScene(fileNamed: "GameMenu") {
             menuScene.scaleMode = .aspectFill
-            view?.presentScene(menuScene, transition: SKTransition.moveIn(with: SKTransitionDirection.right, duration: TimeInterval(1)))
+            view?.presentScene(menuScene, transition: SKTransition.moveIn(with: SKTransitionDirection.right, duration: TimeInterval(0.5)))
         }
     }
 }
