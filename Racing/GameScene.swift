@@ -9,19 +9,30 @@
 import SpriteKit
 import GameplayKit
 import AVFoundation
+import CoreMotion
 
 class GameScene: SKScene, SKPhysicsContactDelegate {
+    
+    var motionManager = CMMotionManager()
     
     var whalePlayer = SKSpriteNode()
     var landRight = SKSpriteNode()
     var landLeft = SKSpriteNode()
     var donut = SKSpriteNode()
     
+    var joystickBack = SKShapeNode()
+    var joystickBtn = SKShapeNode()
+    var joystickInUse = Bool()
+    var velocityX = CGFloat()
+    var velocityY = CGFloat()
+    
     var location = CGPoint(x: 0, y: 0)
     
     var lakeMinX = CGFloat()
     var lakeMaxX = CGFloat()
     var lakeMaxY = CGFloat()
+    var lakeBorderR = CGFloat()
+    var lakeBorderL = CGFloat()
     
     var timePassed = Int()
     var calcScore = Int()
@@ -53,11 +64,76 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 }
             }
         }
+        
+        motionManager.startAccelerometerUpdates()
+        motionManager.accelerometerUpdateInterval = 0.1
+        motionManager.startAccelerometerUpdates(to: OperationQueue.current!) { (data, error) in
+            self.physicsWorld.gravity = CGVector(dx: CGFloat((data?.acceleration.x)!) * 10, dy: CGFloat((data?.acceleration.y)!) * 10)
+            
+        }
     }
     
     override func update(_ currentTime: TimeInterval) {
         showGameObjects()
         removeItems()
+        
+        self.whalePlayer.position.x += velocityX
+        self.whalePlayer.position.y += velocityY
+    }
+    
+    func setUp() {
+        whalePlayer = self.childNode(withName: "whalePlayer") as! SKSpriteNode
+        landRight = self.childNode(withName: "landRight") as! SKSpriteNode
+        landLeft = self.childNode(withName: "landLeft") as! SKSpriteNode
+        
+        score = self.childNode(withName: "score") as! SKLabelNode
+        score.position.x = -(UIScreen.main.bounds.maxX - CGFloat(180))
+        score.position.y = UIScreen.main.bounds.maxY - CGFloat(250)
+        score.zPosition = 20
+        
+        landRight.zPosition = 10
+        landLeft.zPosition = 10
+        whalePlayer.zPosition = 10
+        
+        lakeMaxX = UIScreen.main.bounds.maxX - landRight.size.width
+        lakeMinX = -lakeMaxX
+        lakeMaxY = UIScreen.main.bounds.maxY
+        
+        lakeBorderR = lakeMaxX - whalePlayer.size.width/2
+        lakeBorderL = lakeMinX + whalePlayer.size.width/2
+        
+        landRight.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: (landRight.size.width), height: (landRight.size.height)))
+        landRight.physicsBody?.categoryBitMask = ColliderType.ITEM_COLLIDER
+        landRight.physicsBody?.collisionBitMask = 0
+        landRight.physicsBody?.affectedByGravity = false
+        
+        landLeft.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: (landLeft.size.width), height: (landLeft.size.height)))
+        landLeft.physicsBody?.categoryBitMask = ColliderType.ITEM_COLLIDER
+        landLeft.physicsBody?.collisionBitMask = 0
+        landLeft.physicsBody?.affectedByGravity = false
+        
+        whalePlayer.physicsBody?.categoryBitMask = ColliderType.PLAYER_COLLIDER
+        whalePlayer.physicsBody?.contactTestBitMask = ColliderType.ITEM_COLLIDER
+        whalePlayer.physicsBody?.collisionBitMask = 0
+        
+        // Joystick
+        joystickBtn = SKShapeNode(circleOfRadius: CGFloat(50))
+        joystickBack = SKShapeNode(circleOfRadius: CGFloat(90))
+        joystickBack.fillColor = .darkGray
+        joystickBtn.fillColor = .gray
+        joystickBack.alpha = 0.5
+        joystickBtn.alpha = 0.8
+        
+        joystickBack.position.x = -(UIScreen.main.bounds.maxX - CGFloat(160))
+        joystickBack.position.y = -(UIScreen.main.bounds.maxY - CGFloat(240))
+        joystickBack.zPosition = 20
+        
+        joystickBtn.position.x = -(UIScreen.main.bounds.maxX - CGFloat(160))
+        joystickBtn.position.y = -(UIScreen.main.bounds.maxY - CGFloat(240))
+        joystickBtn.zPosition = 20
+        
+        addChild(joystickBack)
+        addChild(joystickBtn)
     }
     
     @objc func updateTimer() {
@@ -84,7 +160,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     func didBegin(_ contact: SKPhysicsContact) {
-        var firstBody = SKPhysicsBody()
+        var firstBody: SKPhysicsBody?
         var gotADonut = false
         
         if contact.bodyA.node?.name == "whalePlayer" && contact.bodyB.node?.name == "donut" {
@@ -93,65 +169,100 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         } else if contact.bodyA.node?.name == "donut" && contact.bodyB.node?.name == "whalePlayer" {
             firstBody = contact.bodyA
             gotADonut = true
-        } else if contact.bodyA.node?.name == "whalePlayer" {
+        } else if contact.bodyA.node?.name == "whalePlayer" && (contact.bodyB.node?.name != "landLeft" &&  contact.bodyB.node?.name != "landRight") {
             firstBody = contact.bodyA
-        } else {
+        } else if contact.bodyB.node?.name == "whalePlayer" && (contact.bodyA.node?.name != "landLeft" &&  contact.bodyA.node?.name != "landRight") {
             firstBody = contact.bodyB
+        } else {
+            firstBody = nil // Player hit the land, so nothing happens
         }
-        firstBody.node?.removeFromParent()
         
-        if !gotADonut { // Player hit a tree
-            playSoundEffects(soundName: "demage-sound", type: ".mp3")
-            
-            maxScore = ScoreType.highScore
-            if maxScore < calcScore {
-                ScoreType.highScore = calcScore
+        if let bodyToRemove = firstBody {
+            bodyToRemove.node?.removeFromParent()
+        
+            if !gotADonut { // Player hit a tree
+                playSoundEffects(soundName: "demage-sound", type: ".mp3")
+                
+                maxScore = ScoreType.highScore
+                if maxScore < calcScore {
+                    ScoreType.highScore = calcScore
+                }
+                
+                if let player = audioPlayer {
+                    player.stop()
+                }
+                afterCollision()
+            } else { // Player got a donut
+                playSoundEffects(soundName: "coin-sound", type: ".mp3")
+                
+                calcScore += 50
+                updateScoreText()
             }
-            
-            if let player = audioPlayer {
-                player.stop()
-            }
-            afterCollision()
-        } else { // Player got a donut
-            playSoundEffects(soundName: "coin-sound", type: ".mp3")
-            
-            calcScore += 50
-            updateScoreText()
         }
     }
     
-    func setUp() {
-        whalePlayer = self.childNode(withName: "whalePlayer") as! SKSpriteNode
-        landRight = self.childNode(withName: "landRight") as! SKSpriteNode
-        landLeft = self.childNode(withName: "landLeft") as! SKSpriteNode
-        
-        score = self.childNode(withName: "score") as! SKLabelNode
-        score.position.x = -(UIScreen.main.bounds.maxX - CGFloat(180))
-        score.position.y = UIScreen.main.bounds.maxY - CGFloat(250)
-        score.zPosition = 20
-        
-        landRight.zPosition = 10
-        landLeft.zPosition = 10
-        
-        lakeMaxX = UIScreen.main.bounds.maxX - landRight.size.width
-        lakeMinX = -lakeMaxX
-        lakeMaxY = UIScreen.main.bounds.maxY
-        
-        whalePlayer.physicsBody?.categoryBitMask = ColliderType.PLAYER_COLLIDER
-        whalePlayer.physicsBody?.contactTestBitMask = ColliderType.ITEM_COLLIDER
-        whalePlayer.physicsBody?.collisionBitMask = 0
-    }
-    
-    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         for touch in touches {
             let location = touch.location(in: self)
             
-            if location.x <= (lakeMaxX - whalePlayer.size.width/2) && location.x >= (lakeMinX + whalePlayer.size.width/2) {
-                whalePlayer.position.x = location.x
+            if joystickBtn.frame.contains(location) {
+                joystickInUse = true
+            } else {
+                joystickInUse = false
             }
-            
-            whalePlayer.position.y = location.y
         }
+    }
+    
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+//        for touch in touches {
+//            let location = touch.location(in: self)
+//
+//            if location.x <= lakeBorderR && location.x >= lakeBorderL {
+//                whalePlayer.position.x = location.x
+//            }
+//            whalePlayer.position.y = location.y
+//        }
+        
+        for touch in touches {
+            let location = touch.location(in: self)
+            
+            if joystickInUse {
+                let vector = CGVector(dx: location.x - joystickBack.position.x, dy: location.y - joystickBack.position.y)
+                
+                let angle = atan2(vector.dy, vector.dx)
+                
+                let distanceFromCenter = CGFloat(joystickBack.frame.size.height/2)
+                
+                let distanceX = CGFloat(sin((angle - CGFloat(M_PI/2)) + distanceFromCenter))
+                let distanceY = CGFloat(cos((angle - CGFloat(M_PI/2)) + distanceFromCenter))
+                
+                if joystickBack.frame.contains(location) {
+                    joystickBtn.position = location
+                } else {
+                    joystickBtn.position = CGPoint(x: joystickBack.position.x - distanceX, y: joystickBack.position.y - distanceY)
+                }
+                
+                velocityX = (joystickBtn.position.x - joystickBack.position.x)/7
+                velocityY = (joystickBtn.position.y - joystickBack.position.y)/7
+            }
+        }
+    }
+    
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+        movementOver()
+    }
+    
+    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+        movementOver()
+    }
+    
+    func movementOver() {
+        let moveBack = SKAction.move(to: CGPoint(x: joystickBack.position.x, y: joystickBack.position.y), duration: TimeInterval(0.1))
+        moveBack.timingMode = .linear
+        joystickBtn.run(moveBack)
+        joystickInUse = false
+        velocityY = 0
+        velocityX = 0
     }
     
     @objc func createLakeWave() {
@@ -177,6 +288,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         addChild(lakeWave)
     }
     
+    func enumerateChildNodes(objectName: String, objectVelocity: CGFloat) {
+        enumerateChildNodes(withName: objectName, using: { (objectChildNode, stop) in
+            let object = objectChildNode as! SKSpriteNode
+            object.position.y -= objectVelocity
+        })
+    }
+    
     func showGameObjects() {
         enumerateChildNodes(withName: "lakeWave", using: { (lakeWave, stop) in
           let wave = lakeWave as! SKShapeNode
@@ -191,30 +309,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             }
         })
         
-        enumerateChildNodes(withName: "smallTreeR", using: { (treeSmall, stop) in
-            let tree = treeSmall as! SKSpriteNode
-            tree.position.y -= self.velocity + CGFloat(self.timePassed/10)
-        })
-        
-        enumerateChildNodes(withName: "smallTreeL", using: { (treeSmall, stop) in
-            let tree = treeSmall as! SKSpriteNode
-            tree.position.y -= self.velocity + CGFloat(self.timePassed/10)
-        })
-        
-        enumerateChildNodes(withName: "mediumTreeR", using: { (treeMedium, stop) in
-            let tree = treeMedium as! SKSpriteNode
-            tree.position.y -= self.velocity + CGFloat(self.timePassed/10)
-        })
-        
-        enumerateChildNodes(withName: "mediumTreeL", using: { (treeMedium, stop) in
-            let tree = treeMedium as! SKSpriteNode
-            tree.position.y -= self.velocity + CGFloat(self.timePassed/10)
-        })
-        
-        enumerateChildNodes(withName: "donut", using: { (prize, stop) in
-            let donut = prize as! SKSpriteNode
-            donut.position.y -= self.velocity + CGFloat(self.timePassed/10)
-        })
+        enumerateChildNodes(objectName: "smallTreeR", objectVelocity: self.velocity + CGFloat(self.timePassed/10))
+        enumerateChildNodes(objectName: "smallTreeL", objectVelocity: self.velocity + CGFloat(self.timePassed/10))
+        enumerateChildNodes(objectName: "mediumTreeR", objectVelocity: self.velocity + CGFloat(self.timePassed/10))
+        enumerateChildNodes(objectName: "mediumTreeL", objectVelocity: self.velocity + CGFloat(self.timePassed/10))
+        enumerateChildNodes(objectName: "donut", objectVelocity: self.velocity + CGFloat(self.timePassed/10))
     }
     
     @objc func treeObstacles() {
@@ -294,7 +393,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
         
         tree.anchorPoint = CGPoint(x: 0.5, y: 0.5)
-        tree.zPosition = 10
         tree.position.y = lakeMaxY
         
         tree.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: (tree.size.width - 20), height: (tree.size.height - 20)))
@@ -322,7 +420,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
         
         donutPrize.anchorPoint = CGPoint(x: 0.5, y: 0.5)
-        donutPrize.zPosition = 10
         donutPrize.position.y = lakeMaxY + donutPrize.size.height + 10
         
         donutPrize.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: (donutPrize.size.width - 20), height: (donutPrize.size.height - 20)))
