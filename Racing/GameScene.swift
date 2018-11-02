@@ -40,17 +40,21 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var velocity = CGFloat(10)
     var maxScore = Int()
     var obstaclesPassed = Int()
+    var objectsTimeInterval = CGFloat(2)
     
     var audioPlayer: AVAudioPlayer?
     var soundEffects: AVAudioPlayer?
+    
+    var treeTimer = Timer()
         
     override func didMove(to view: SKView) {
         self.anchorPoint = CGPoint(x: 0.5, y: 0.5)
+        print(self.frame)
         setUp()
         physicsWorld.contactDelegate = self
-        Timer.scheduledTimer(timeInterval: TimeInterval(0.5), target: self, selector: #selector(GameScene.createLakeWave), userInfo: nil, repeats: true)
-        Timer.scheduledTimer(timeInterval: TimeInterval(1), target: self, selector: #selector(GameScene.treeObstacles), userInfo: nil, repeats: true)
-        Timer.scheduledTimer(timeInterval: TimeInterval(3), target: self, selector: #selector(GameScene.createDonut), userInfo: nil, repeats: true)
+        Timer.scheduledTimer(timeInterval: TimeInterval(1), target: self, selector: #selector(GameScene.createLakeWave), userInfo: nil, repeats: true)
+        treeTimer = Timer.scheduledTimer(timeInterval: TimeInterval(objectsTimeInterval), target: self, selector: #selector(GameScene.treeObstacles), userInfo: nil, repeats: true)
+        Timer.scheduledTimer(timeInterval: TimeInterval(objectsTimeInterval+3), target: self, selector: #selector(GameScene.createDonut), userInfo: nil, repeats: true)
         Timer.scheduledTimer(timeInterval: TimeInterval(1), target: self, selector: (#selector(GameScene.updateTimer)), userInfo: nil, repeats: true)
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) { // Will delay for 1 second the starting of the music
@@ -77,8 +81,24 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         showGameObjects()
         removeItems()
         
-        self.whalePlayer.position.x += velocityX
+        let positionX = self.whalePlayer.position.x + velocityX
+        if positionX <= lakeBorderR && positionX >= lakeBorderL {
+            self.whalePlayer.position.x += velocityX
+        }
         self.whalePlayer.position.y += velocityY
+        
+        if timePassed == 20 {
+            self.velocity = self.velocity <= 40 ? self.velocity + 1 : self.velocity
+            
+            self.objectsTimeInterval = (self.objectsTimeInterval >= 1) ? self.objectsTimeInterval - 0.2 : self.objectsTimeInterval
+            
+            print("Velocity = \(velocity) - ObjectTime = \(objectsTimeInterval)")
+            
+            treeTimer.invalidate()
+            treeTimer = Timer.scheduledTimer(timeInterval: TimeInterval(objectsTimeInterval), target: self, selector: #selector(GameScene.treeObstacles), userInfo: nil, repeats: true)
+            
+            timePassed = 0
+        }
     }
     
     func setUp() {
@@ -242,8 +262,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                     joystickBtn.position = CGPoint(x: joystickBack.position.x - distanceX, y: joystickBack.position.y - distanceY)
                 }
                 
-                velocityX = (joystickBtn.position.x - joystickBack.position.x)/7
-                velocityY = (joystickBtn.position.y - joystickBack.position.y)/7
+                velocityX = (joystickBtn.position.x - joystickBack.position.x)/5
+                velocityY = (joystickBtn.position.y - joystickBack.position.y)/5
             }
         }
     }
@@ -288,10 +308,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         addChild(lakeWave)
     }
     
-    func enumerateChildNodes(objectName: String, objectVelocity: CGFloat) {
+    func enumerateChildNodes(objectName: String) {
         enumerateChildNodes(withName: objectName, using: { (objectChildNode, stop) in
             let object = objectChildNode as! SKSpriteNode
-            object.position.y -= objectVelocity
+            object.position.y -= self.velocity
         })
     }
     
@@ -309,11 +329,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             }
         })
         
-        enumerateChildNodes(objectName: "smallTreeR", objectVelocity: self.velocity + CGFloat(self.timePassed/10))
-        enumerateChildNodes(objectName: "smallTreeL", objectVelocity: self.velocity + CGFloat(self.timePassed/10))
-        enumerateChildNodes(objectName: "mediumTreeR", objectVelocity: self.velocity + CGFloat(self.timePassed/10))
-        enumerateChildNodes(objectName: "mediumTreeL", objectVelocity: self.velocity + CGFloat(self.timePassed/10))
-        enumerateChildNodes(objectName: "donut", objectVelocity: self.velocity + CGFloat(self.timePassed/10))
+        enumerateChildNodes(objectName: "smallTreeR")
+        enumerateChildNodes(objectName: "smallTreeL")
+        enumerateChildNodes(objectName: "mediumTreeR")
+        enumerateChildNodes(objectName: "mediumTreeL")
+        enumerateChildNodes(objectName: "donut")
     }
     
     @objc func treeObstacles() {
