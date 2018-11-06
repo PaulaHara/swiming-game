@@ -14,6 +14,7 @@ class GameMenu: SKScene {
     
     var startGame = SKSpriteNode()
     var highScore = SKLabelNode()
+    var currentScore = SKLabelNode()
     
     var audioPlayer: AVAudioPlayer?
     
@@ -21,7 +22,9 @@ class GameMenu: SKScene {
         self.anchorPoint = CGPoint(x: 0.5, y: 0.5)
         startGame = self.childNode(withName: "startGame") as! SKSpriteNode
         highScore = self.childNode(withName: "highscore") as! SKLabelNode
+        currentScore = self.childNode(withName: "currentScore") as! SKLabelNode
         highScore.text = "High Score: \(ScoreType.highScore)"
+        currentScore.text = "Your Score: \(ScoreType.currentScore)"
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) { // Will delay for 1 second the starting of the music
             if let path = Bundle.main.path(forResource: "Game-Menu-Music", ofType: ".mp3") {

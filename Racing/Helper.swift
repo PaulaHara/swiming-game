@@ -16,4 +16,5 @@ struct ColliderType {
 
 struct ScoreType {
     static var highScore = 0
+    static var currentScore = 0
 }

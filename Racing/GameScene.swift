@@ -37,7 +37,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var timePassed = Int()
     var calcScore = Int()
     var score = SKLabelNode()
-    var velocity = CGFloat(10)
+    var velocity = CGFloat(5)
     var maxScore = Int()
     var obstaclesPassed = Int()
     var objectsTimeInterval = CGFloat(2)
@@ -46,18 +46,20 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var soundEffects: AVAudioPlayer?
     
     var treeTimer = Timer()
+    var donutTimer = Timer()
         
     override func didMove(to view: SKView) {
         self.anchorPoint = CGPoint(x: 0.5, y: 0.5)
-        print(self.frame)
         setUp()
         physicsWorld.contactDelegate = self
+        
         Timer.scheduledTimer(timeInterval: TimeInterval(1), target: self, selector: #selector(GameScene.createLakeWave), userInfo: nil, repeats: true)
         treeTimer = Timer.scheduledTimer(timeInterval: TimeInterval(objectsTimeInterval), target: self, selector: #selector(GameScene.treeObstacles), userInfo: nil, repeats: true)
-        Timer.scheduledTimer(timeInterval: TimeInterval(objectsTimeInterval+3), target: self, selector: #selector(GameScene.createDonut), userInfo: nil, repeats: true)
+        donutTimer = Timer.scheduledTimer(timeInterval: TimeInterval(objectsTimeInterval*4), target: self, selector: #selector(GameScene.createDonut), userInfo: nil, repeats: true)
         Timer.scheduledTimer(timeInterval: TimeInterval(1), target: self, selector: (#selector(GameScene.updateTimer)), userInfo: nil, repeats: true)
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { // Will delay for 1 second the starting of the music
+        // This will delay for 1 second the starting of the music
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
             if let path = Bundle.main.path(forResource: "Gameplay-Music", ofType: ".mp3") {
                 let url = URL(fileURLWithPath: path)
                 self.audioPlayer = try? AVAudioPlayer(contentsOf: url)
@@ -69,6 +71,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             }
         }
         
+        // Accelerometer - Test
         motionManager.startAccelerometerUpdates()
         motionManager.accelerometerUpdateInterval = 0.1
         motionManager.startAccelerometerUpdates(to: OperationQueue.current!) { (data, error) in
@@ -81,26 +84,30 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         showGameObjects()
         removeItems()
         
+        // This calculates if the position of the player passed the lake border
         let positionX = self.whalePlayer.position.x + velocityX
         if positionX <= lakeBorderR && positionX >= lakeBorderL {
             self.whalePlayer.position.x += velocityX
         }
         self.whalePlayer.position.y += velocityY
         
+        // After 20s the velocity is increased by 1, the velocity of the obstacles and donuts are also increased
         if timePassed == 20 {
             self.velocity = self.velocity <= 40 ? self.velocity + 1 : self.velocity
             
             self.objectsTimeInterval = (self.objectsTimeInterval >= 1) ? self.objectsTimeInterval - 0.2 : self.objectsTimeInterval
             
-            print("Velocity = \(velocity) - ObjectTime = \(objectsTimeInterval)")
-            
             treeTimer.invalidate()
             treeTimer = Timer.scheduledTimer(timeInterval: TimeInterval(objectsTimeInterval), target: self, selector: #selector(GameScene.treeObstacles), userInfo: nil, repeats: true)
+            
+            donutTimer.invalidate()
+            donutTimer = Timer.scheduledTimer(timeInterval: TimeInterval(objectsTimeInterval*4), target: self, selector: #selector(GameScene.createDonut), userInfo: nil, repeats: true)
             
             timePassed = 0
         }
     }
     
+    // Setup the player, the landRight, landLeft and the joystick
     func setUp() {
         whalePlayer = self.childNode(withName: "whalePlayer") as! SKSpriteNode
         landRight = self.childNode(withName: "landRight") as! SKSpriteNode
@@ -122,15 +129,15 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         lakeBorderR = lakeMaxX - whalePlayer.size.width/2
         lakeBorderL = lakeMinX + whalePlayer.size.width/2
         
-        landRight.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: (landRight.size.width), height: (landRight.size.height)))
-        landRight.physicsBody?.categoryBitMask = ColliderType.ITEM_COLLIDER
-        landRight.physicsBody?.collisionBitMask = 0
-        landRight.physicsBody?.affectedByGravity = false
-        
-        landLeft.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: (landLeft.size.width), height: (landLeft.size.height)))
-        landLeft.physicsBody?.categoryBitMask = ColliderType.ITEM_COLLIDER
-        landLeft.physicsBody?.collisionBitMask = 0
-        landLeft.physicsBody?.affectedByGravity = false
+//        landRight.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: (landRight.size.width), height: (landRight.size.height)))
+//        landRight.physicsBody?.categoryBitMask = ColliderType.ITEM_COLLIDER
+//        landRight.physicsBody?.collisionBitMask = 1
+//        landRight.physicsBody?.affectedByGravity = false
+//
+//        landLeft.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: (landLeft.size.width), height: (landLeft.size.height)))
+//        landLeft.physicsBody?.categoryBitMask = ColliderType.ITEM_COLLIDER
+//        landLeft.physicsBody?.collisionBitMask = 1
+//        landLeft.physicsBody?.affectedByGravity = false
         
         whalePlayer.physicsBody?.categoryBitMask = ColliderType.PLAYER_COLLIDER
         whalePlayer.physicsBody?.contactTestBitMask = ColliderType.ITEM_COLLIDER
@@ -179,6 +186,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
     }
     
+    // Verify if player touched some obstacles or a donut
     func didBegin(_ contact: SKPhysicsContact) {
         var firstBody: SKPhysicsBody?
         var gotADonut = false
@@ -207,6 +215,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 if maxScore < calcScore {
                     ScoreType.highScore = calcScore
                 }
+                ScoreType.currentScore = calcScore
                 
                 if let player = audioPlayer {
                     player.stop()
@@ -215,12 +224,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             } else { // Player got a donut
                 playSoundEffects(soundName: "coin-sound", type: ".mp3")
                 
-                calcScore += 50
+                calcScore += 30
                 updateScoreText()
             }
         }
     }
     
+    // When joystick start moving
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         for touch in touches {
             let location = touch.location(in: self)
@@ -234,6 +244,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+        // Move happens by touch and drag of the whale
 //        for touch in touches {
 //            let location = touch.location(in: self)
 //
@@ -243,6 +254,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 //            whalePlayer.position.y = location.y
 //        }
         
+        // Move happens using the joystick
         for touch in touches {
             let location = touch.location(in: self)
             
@@ -253,8 +265,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 
                 let distanceFromCenter = CGFloat(joystickBack.frame.size.height/2)
                 
-                let distanceX = CGFloat(sin((angle - CGFloat(M_PI/2)) + distanceFromCenter))
-                let distanceY = CGFloat(cos((angle - CGFloat(M_PI/2)) + distanceFromCenter))
+                let distanceX = CGFloat(sin((angle - CGFloat.pi/2) + distanceFromCenter))
+                let distanceY = CGFloat(cos((angle - CGFloat.pi/2) + distanceFromCenter))
                 
                 if joystickBack.frame.contains(location) {
                     joystickBtn.position = location
@@ -285,6 +297,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         velocityX = 0
     }
     
+    // Create the moving waves of the lake
     @objc func createLakeWave() {
         let lakeWave = SKShapeNode(ellipseOf: CGSize(width: 80, height: 10))
         lakeWave.strokeColor = SKColor.white
@@ -315,6 +328,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         })
     }
     
+    // Without this the waves, trees and donut are not shown
     func showGameObjects() {
         enumerateChildNodes(withName: "lakeWave", using: { (lakeWave, stop) in
           let wave = lakeWave as! SKShapeNode
@@ -336,6 +350,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         enumerateChildNodes(objectName: "donut")
     }
     
+    // Create the tree obstacles with random position
     @objc func treeObstacles() {
         let randomNumber = Int.random(in: 1...50)
         
@@ -423,6 +438,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         addChild(tree)
     }
     
+    // Create donuts with random position
     @objc func createDonut() {
         let donutPrize = SKSpriteNode(texture: SKTexture(imageNamed: "donut"))
         donutPrize.size.width = 50
@@ -450,15 +466,16 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         addChild(donutPrize)
     }
     
+    // When items are out of the scree they are removed
     func removeItems() {
         for child in children {
             if child.position.y < -self.size.height - 100 {
                 child.removeFromParent()
-                calcScore += 1
             }
         }
     }
     
+    // When player touch a tree obstacle he looses the game and scene is changed to "GameMenu"
     func afterCollision() {
         if let menuScene = SKScene(fileNamed: "GameMenu") {
             menuScene.scaleMode = .aspectFill
