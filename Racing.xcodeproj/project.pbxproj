@@ -22,6 +22,8 @@
 		DA8A9FC52182988100610124 /* Helper.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA8A9FC42182988100610124 /* Helper.swift */; };
 		DA8A9FC721829DAB00610124 /* GameMenu.sks in Resources */ = {isa = PBXBuildFile; fileRef = DA8A9FC621829DAB00610124 /* GameMenu.sks */; };
 		DA8A9FC921829DBA00610124 /* GameMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA8A9FC821829DBA00610124 /* GameMenu.swift */; };
+		DA979C7C2192A4BD00623D3E /* ConfigurationMenu.sks in Resources */ = {isa = PBXBuildFile; fileRef = DA979C7B2192A4BD00623D3E /* ConfigurationMenu.sks */; };
+		DA979C7E2192A4CF00623D3E /* ConfigurationMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA979C7D2192A4CF00623D3E /* ConfigurationMenu.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -42,6 +44,8 @@
 		DA8A9FC42182988100610124 /* Helper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Helper.swift; sourceTree = "<group>"; };
 		DA8A9FC621829DAB00610124 /* GameMenu.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = GameMenu.sks; sourceTree = "<group>"; };
 		DA8A9FC821829DBA00610124 /* GameMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameMenu.swift; sourceTree = "<group>"; };
+		DA979C7B2192A4BD00623D3E /* ConfigurationMenu.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = ConfigurationMenu.sks; sourceTree = "<group>"; };
+		DA979C7D2192A4CF00623D3E /* ConfigurationMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigurationMenu.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -90,6 +94,8 @@
 				DA634A052187FA32006FA1F0 /* Gameplay-Music.mp3 */,
 				DA634A082187FE4D006FA1F0 /* coin-sound.mp3 */,
 				DA634A072187FE4D006FA1F0 /* demage-sound.mp3 */,
+				DA979C7B2192A4BD00623D3E /* ConfigurationMenu.sks */,
+				DA979C7D2192A4CF00623D3E /* ConfigurationMenu.swift */,
 			);
 			path = Racing;
 			sourceTree = "<group>";
@@ -159,6 +165,7 @@
 				DA634A092187FE4D006FA1F0 /* demage-sound.mp3 in Resources */,
 				DA022FB621800F0400F6D2A5 /* Assets.xcassets in Resources */,
 				DA634A042187F8EA006FA1F0 /* Game-Menu-Music.mp3 in Resources */,
+				DA979C7C2192A4BD00623D3E /* ConfigurationMenu.sks in Resources */,
 				DA634A0A2187FE4D006FA1F0 /* coin-sound.mp3 in Resources */,
 				DA022FB921800F0400F6D2A5 /* LaunchScreen.storyboard in Resources */,
 			);
@@ -176,6 +183,7 @@
 				DA8A9FC52182988100610124 /* Helper.swift in Sources */,
 				DA022FC32180166900F6D2A5 /* Credits.swift in Sources */,
 				DA8A9FC921829DBA00610124 /* GameMenu.swift in Sources */,
+				DA979C7E2192A4CF00623D3E /* ConfigurationMenu.swift in Sources */,
 				DA022FA921800EFE00F6D2A5 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

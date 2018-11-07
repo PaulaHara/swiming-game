@@ -12,6 +12,7 @@ import AVFoundation
 import CoreMotion
 
 class GameScene: SKScene, SKPhysicsContactDelegate {
+    let gameLayer = SKNode()
     
     var motionManager = CMMotionManager()
     
@@ -26,13 +27,18 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var velocityX = CGFloat()
     var velocityY = CGFloat()
     
+    var configuration = SKSpriteNode()
+    
     var location = CGPoint(x: 0, y: 0)
     
     var lakeMinX = CGFloat()
     var lakeMaxX = CGFloat()
     var lakeMaxY = CGFloat()
+    var lakeMinY = CGFloat()
     var lakeBorderR = CGFloat()
     var lakeBorderL = CGFloat()
+    var lakeBorderBottom = CGFloat()
+    var lakeBorderUp = CGFloat()
     
     var timePassed = Int()
     var calcScore = Int()
@@ -48,9 +54,13 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var waveTimer = Timer()
     var treeTimer = Timer()
     var donutTimer = Timer()
+    
+    var gameIsPaused = false
         
     override func didMove(to view: SKView) {
         self.anchorPoint = CGPoint(x: 0.5, y: 0.5)
+        addChild(gameLayer)
+        
         setUp()
         physicsWorld.contactDelegate = self
         
@@ -65,9 +75,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 let url = URL(fileURLWithPath: path)
                 self.audioPlayer = try? AVAudioPlayer(contentsOf: url)
                 
-                if let player = self.audioPlayer {
-                    player.play()
-                    player.numberOfLoops = -1
+                if let audio = self.audioPlayer {
+                    audio.play()
+                    audio.numberOfLoops = -1
                 }
             }
         }
@@ -77,7 +87,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         motionManager.accelerometerUpdateInterval = 0.1
         motionManager.startAccelerometerUpdates(to: OperationQueue.current!) { (data, error) in
             self.physicsWorld.gravity = CGVector(dx: CGFloat((data?.acceleration.x)!) * 10, dy: CGFloat((data?.acceleration.y)!) * 10)
-            
         }
     }
     
@@ -90,7 +99,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         if positionX <= lakeBorderR && positionX >= lakeBorderL {
             self.whalePlayer.position.x += velocityX
         }
-        self.whalePlayer.position.y += velocityY
+        let positionY = self.whalePlayer.position.y + velocityY
+        if positionY <= lakeBorderUp && positionY >= lakeBorderBottom {
+            print("py: \(positionY) - up: \(lakeBorderUp) - bo: \(lakeBorderBottom)")
+            self.whalePlayer.position.y += velocityY
+        }
         
         // After 20s the velocity is increased by 1, the velocity of the obstacles and donuts are also increased
         if timePassed == 20 {
@@ -116,6 +129,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         whalePlayer = self.childNode(withName: "whalePlayer") as! SKSpriteNode
         landRight = self.childNode(withName: "landRight") as! SKSpriteNode
         landLeft = self.childNode(withName: "landLeft") as! SKSpriteNode
+        configuration = self.childNode(withName: "configuration") as! SKSpriteNode
         
         score = self.childNode(withName: "score") as! SKLabelNode
         score.position.x = -(UIScreen.main.bounds.maxX - CGFloat(180))
@@ -126,12 +140,20 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         landLeft.zPosition = 10
         whalePlayer.zPosition = 10
         
+        configuration.position.x = UIScreen.main.bounds.maxX - CGFloat(110)
+        configuration.position.y = -(UIScreen.main.bounds.maxY - CGFloat(200))
+        configuration.zPosition = 10
+        
         lakeMaxX = UIScreen.main.bounds.maxX - landRight.size.width
         lakeMinX = -lakeMaxX
         lakeMaxY = UIScreen.main.bounds.maxY
+        lakeMinY = -lakeMaxY
         
         lakeBorderR = lakeMaxX - whalePlayer.size.width/2
         lakeBorderL = lakeMinX + whalePlayer.size.width/2
+        
+        lakeBorderUp = lakeMaxY - whalePlayer.size.height*1.5
+        lakeBorderBottom = lakeMinY + whalePlayer.size.height*1.5
         
 //        landRight.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: (landRight.size.width), height: (landRight.size.height)))
 //        landRight.physicsBody?.categoryBitMask = ColliderType.ITEM_COLLIDER
@@ -163,8 +185,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         joystickBtn.position.y = -(UIScreen.main.bounds.maxY - CGFloat(240))
         joystickBtn.zPosition = 20
         
-        addChild(joystickBack)
-        addChild(joystickBtn)
+        gameLayer.addChild(joystickBack)
+        gameLayer.addChild(joystickBtn)
     }
     
     @objc func updateTimer() {
@@ -201,10 +223,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         } else if contact.bodyA.node?.name == "donut" && contact.bodyB.node?.name == "whalePlayer" {
             firstBody = contact.bodyA
             gotADonut = true
-//        } else if contact.bodyA.node?.name == "whalePlayer" && (contact.bodyB.node?.name != "landLeft" &&  contact.bodyB.node?.name != "landRight") {
-//            firstBody = contact.bodyA
-//        } else if contact.bodyB.node?.name == "whalePlayer" && (contact.bodyA.node?.name != "landLeft" &&  contact.bodyA.node?.name != "landRight") {
-//            firstBody = contact.bodyB
+        } else if contact.bodyA.node?.name == "whalePlayer" && (contact.bodyB.node?.name != "landLeft" &&  contact.bodyB.node?.name != "landRight") {
+            firstBody = contact.bodyA
+        } else if contact.bodyB.node?.name == "whalePlayer" && (contact.bodyA.node?.name != "landLeft" &&  contact.bodyA.node?.name != "landRight") {
+            firstBody = contact.bodyB
         } else {
             firstBody = nil // Player hit the land, so nothing happens
         }
@@ -243,6 +265,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 joystickInUse = true
             } else {
                 joystickInUse = false
+            }
+            
+            if configuration.frame.contains(location) {
+                openConfig()
             }
         }
     }
@@ -303,7 +329,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     // Create the moving waves of the lake
     @objc func createLakeWave() {
-        let lakeWave = SKShapeNode(ellipseOf: CGSize(width: 80, height: 10))
+        let lakeWave = SKShapeNode(ellipseOf: CGSize(width: 100, height: 10))
         lakeWave.strokeColor = SKColor.white
         lakeWave.fillColor = SKColor.white
         lakeWave.alpha = 0.5
@@ -322,7 +348,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
         
         lakeWave.position.y = lakeMaxY
-        addChild(lakeWave)
+        gameLayer.addChild(lakeWave)
     }
     
     func enumerateChildNodes(objectName: String) {
@@ -334,9 +360,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     // Without this the waves, trees and donut are not shown
     func showGameObjects() {
-        enumerateChildNodes(withName: "lakeWave", using: { (lakeWave, stop) in
+        gameLayer.enumerateChildNodes(withName: "lakeWave", using: { (lakeWave, stop) in
           let wave = lakeWave as! SKShapeNode
-            wave.position.y -= 20 + CGFloat(self.velocity/2)
+            wave.position.y -= 20 + self.velocity
             
             let randomNum = Int.random(in: 1...2)
             if randomNum == 1 {
@@ -485,5 +511,33 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             menuScene.scaleMode = .aspectFill
             view?.presentScene(menuScene, transition: SKTransition.moveIn(with: SKTransitionDirection.right, duration: TimeInterval(0.5)))
         }
+    }
+    
+    func openConfig() {
+//        let pauseText = SKLabelNode(text: "Paused")
+//        pauseText.fontSize = 40
+//        pauseText.fontColor = .red
+//        pauseText.position.x = 0
+//        pauseText.position.y = 0
+//        pauseText.zPosition = 25
+//
+//        if !gameIsPaused {
+//            addChild(pauseText)
+//        } else {
+//            pauseText.removeFromParent()
+//        }
+//        gameIsPaused = !gameIsPaused
+//
+//        let pauseAction = SKAction.run {
+//            self.view?.isPaused = self.gameIsPaused
+//        }
+//        self.run(pauseAction)
+        
+//        if let configMenu = SKScene(fileNamed: "ConfigurationMenu") {
+//            //configMenu.scaleMode = .resizeFill
+//            configMenu.size.width = 700
+//            configMenu.size.height = 800
+//            view?.presentScene(configMenu, transition: SKTransition.moveIn(with: SKTransitionDirection.right, duration: TimeInterval(0.5)))
+//        }
     }
 }
