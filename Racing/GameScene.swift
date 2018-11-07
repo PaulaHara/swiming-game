@@ -15,6 +15,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     var motionManager = CMMotionManager()
     
+    var mainNode = SKNode()
+    
     var whalePlayer = SKSpriteNode()
     var landRight = SKSpriteNode()
     var landLeft = SKSpriteNode()
@@ -26,13 +28,18 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var velocityX = CGFloat()
     var velocityY = CGFloat()
     
+    var configuration = SKSpriteNode()
+    
     var location = CGPoint(x: 0, y: 0)
     
     var lakeMinX = CGFloat()
     var lakeMaxX = CGFloat()
     var lakeMaxY = CGFloat()
+    var lakeMinY = CGFloat()
     var lakeBorderR = CGFloat()
     var lakeBorderL = CGFloat()
+    var lakeBorderBottom = CGFloat()
+    var lakeBorderUp = CGFloat()
     
     var timePassed = Int()
     var calcScore = Int()
@@ -45,6 +52,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var audioPlayer: AVAudioPlayer?
     var soundEffects: AVAudioPlayer?
     
+    var waveTimer = Timer()
     var treeTimer = Timer()
     var donutTimer = Timer()
         
@@ -53,7 +61,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         setUp()
         physicsWorld.contactDelegate = self
         
-        Timer.scheduledTimer(timeInterval: TimeInterval(1), target: self, selector: #selector(GameScene.createLakeWave), userInfo: nil, repeats: true)
+        waveTimer = Timer.scheduledTimer(timeInterval: TimeInterval(objectsTimeInterval/2), target: self, selector: #selector(GameScene.createLakeWave), userInfo: nil, repeats: true)
         treeTimer = Timer.scheduledTimer(timeInterval: TimeInterval(objectsTimeInterval), target: self, selector: #selector(GameScene.treeObstacles), userInfo: nil, repeats: true)
         donutTimer = Timer.scheduledTimer(timeInterval: TimeInterval(objectsTimeInterval*4), target: self, selector: #selector(GameScene.createDonut), userInfo: nil, repeats: true)
         Timer.scheduledTimer(timeInterval: TimeInterval(1), target: self, selector: (#selector(GameScene.updateTimer)), userInfo: nil, repeats: true)
@@ -64,9 +72,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 let url = URL(fileURLWithPath: path)
                 self.audioPlayer = try? AVAudioPlayer(contentsOf: url)
                 
-                if let player = self.audioPlayer {
-                    player.play()
-                    player.numberOfLoops = -1
+                if let audio = self.audioPlayer {
+                    audio.play()
+                    audio.numberOfLoops = -1
                 }
             }
         }
@@ -76,7 +84,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         motionManager.accelerometerUpdateInterval = 0.1
         motionManager.startAccelerometerUpdates(to: OperationQueue.current!) { (data, error) in
             self.physicsWorld.gravity = CGVector(dx: CGFloat((data?.acceleration.x)!) * 10, dy: CGFloat((data?.acceleration.y)!) * 10)
-            
         }
     }
     
@@ -89,13 +96,20 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         if positionX <= lakeBorderR && positionX >= lakeBorderL {
             self.whalePlayer.position.x += velocityX
         }
-        self.whalePlayer.position.y += velocityY
+        let positionY = self.whalePlayer.position.y + velocityY
+        if positionY <= lakeBorderUp && positionY >= lakeBorderBottom {
+            print("py: \(positionY) - up: \(lakeBorderUp) - bo: \(lakeBorderBottom)")
+            self.whalePlayer.position.y += velocityY
+        }
         
         // After 20s the velocity is increased by 1, the velocity of the obstacles and donuts are also increased
         if timePassed == 20 {
             self.velocity = self.velocity <= 40 ? self.velocity + 1 : self.velocity
             
             self.objectsTimeInterval = (self.objectsTimeInterval >= 1) ? self.objectsTimeInterval - 0.2 : self.objectsTimeInterval
+            
+            waveTimer.invalidate()
+            waveTimer = Timer.scheduledTimer(timeInterval: TimeInterval(objectsTimeInterval/2), target: self, selector: #selector(GameScene.createLakeWave), userInfo: nil, repeats: true)
             
             treeTimer.invalidate()
             treeTimer = Timer.scheduledTimer(timeInterval: TimeInterval(objectsTimeInterval), target: self, selector: #selector(GameScene.treeObstacles), userInfo: nil, repeats: true)
@@ -109,9 +123,11 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     // Setup the player, the landRight, landLeft and the joystick
     func setUp() {
+        mainNode = self.childNode(withName: "mainNode") as! SKNode
         whalePlayer = self.childNode(withName: "whalePlayer") as! SKSpriteNode
         landRight = self.childNode(withName: "landRight") as! SKSpriteNode
         landLeft = self.childNode(withName: "landLeft") as! SKSpriteNode
+        configuration = self.childNode(withName: "configuration") as! SKSpriteNode
         
         score = self.childNode(withName: "score") as! SKLabelNode
         score.position.x = -(UIScreen.main.bounds.maxX - CGFloat(180))
@@ -122,12 +138,20 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         landLeft.zPosition = 10
         whalePlayer.zPosition = 10
         
+        configuration.position.x = UIScreen.main.bounds.maxX - CGFloat(110)
+        configuration.position.y = -(UIScreen.main.bounds.maxY - CGFloat(200))
+        configuration.zPosition = 10
+        
         lakeMaxX = UIScreen.main.bounds.maxX - landRight.size.width
         lakeMinX = -lakeMaxX
         lakeMaxY = UIScreen.main.bounds.maxY
+        lakeMinY = -lakeMaxY
         
         lakeBorderR = lakeMaxX - whalePlayer.size.width/2
         lakeBorderL = lakeMinX + whalePlayer.size.width/2
+        
+        lakeBorderUp = lakeMaxY - whalePlayer.size.height*1.5
+        lakeBorderBottom = lakeMinY + whalePlayer.size.height*1.5
         
 //        landRight.physicsBody = SKPhysicsBody(rectangleOf: CGSize(width: (landRight.size.width), height: (landRight.size.height)))
 //        landRight.physicsBody?.categoryBitMask = ColliderType.ITEM_COLLIDER
@@ -159,8 +183,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         joystickBtn.position.y = -(UIScreen.main.bounds.maxY - CGFloat(240))
         joystickBtn.zPosition = 20
         
-        addChild(joystickBack)
-        addChild(joystickBtn)
+        mainNode.addChild(joystickBack)
+        mainNode.addChild(joystickBtn)
     }
     
     @objc func updateTimer() {
@@ -240,6 +264,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             } else {
                 joystickInUse = false
             }
+            
+            if configuration.frame.contains(location) {
+                openConfig()
+            }
         }
     }
     
@@ -299,7 +327,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     // Create the moving waves of the lake
     @objc func createLakeWave() {
-        let lakeWave = SKShapeNode(ellipseOf: CGSize(width: 80, height: 10))
+        let lakeWave = SKShapeNode(ellipseOf: CGSize(width: 100, height: 10))
         lakeWave.strokeColor = SKColor.white
         lakeWave.fillColor = SKColor.white
         lakeWave.alpha = 0.5
@@ -318,7 +346,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
         
         lakeWave.position.y = lakeMaxY
-        addChild(lakeWave)
+        mainNode.addChild(lakeWave)
     }
     
     func enumerateChildNodes(objectName: String) {
@@ -332,7 +360,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     func showGameObjects() {
         enumerateChildNodes(withName: "lakeWave", using: { (lakeWave, stop) in
           let wave = lakeWave as! SKShapeNode
-            wave.position.y -= 20 + CGFloat(self.timePassed/10)
+            wave.position.y -= 20 + self.velocity
             
             let randomNum = Int.random(in: 1...2)
             if randomNum == 1 {
@@ -435,7 +463,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         tree.physicsBody?.collisionBitMask = 0
         tree.physicsBody?.affectedByGravity = false
         
-        addChild(tree)
+        mainNode.addChild(tree)
     }
     
     // Create donuts with random position
@@ -481,5 +509,15 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             menuScene.scaleMode = .aspectFill
             view?.presentScene(menuScene, transition: SKTransition.moveIn(with: SKTransitionDirection.right, duration: TimeInterval(0.5)))
         }
+    }
+    
+    func openConfig() {
+        mainNode.isPaused = true
+//        if let configMenu = SKScene(fileNamed: "ConfigurationMenu") {
+//            //configMenu.scaleMode = .resizeFill
+//            configMenu.size.width = 700
+//            configMenu.size.height = 800
+//            view?.presentScene(configMenu, transition: SKTransition.moveIn(with: SKTransitionDirection.right, duration: TimeInterval(0.5)))
+//        }
     }
 }
