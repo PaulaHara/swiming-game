@@ -40,11 +40,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var velocity = CGFloat(5)
     var maxScore = Int()
     var obstaclesPassed = Int()
-    var objectsTimeInterval = CGFloat(2)
+    var objectsTimeInterval = CGFloat(3)
     
     var audioPlayer: AVAudioPlayer?
     var soundEffects: AVAudioPlayer?
     
+    var waveTimer = Timer()
     var treeTimer = Timer()
     var donutTimer = Timer()
         
@@ -53,7 +54,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         setUp()
         physicsWorld.contactDelegate = self
         
-        Timer.scheduledTimer(timeInterval: TimeInterval(1), target: self, selector: #selector(GameScene.createLakeWave), userInfo: nil, repeats: true)
+        waveTimer = Timer.scheduledTimer(timeInterval: TimeInterval(objectsTimeInterval/2), target: self, selector: #selector(GameScene.createLakeWave), userInfo: nil, repeats: true)
         treeTimer = Timer.scheduledTimer(timeInterval: TimeInterval(objectsTimeInterval), target: self, selector: #selector(GameScene.treeObstacles), userInfo: nil, repeats: true)
         donutTimer = Timer.scheduledTimer(timeInterval: TimeInterval(objectsTimeInterval*4), target: self, selector: #selector(GameScene.createDonut), userInfo: nil, repeats: true)
         Timer.scheduledTimer(timeInterval: TimeInterval(1), target: self, selector: (#selector(GameScene.updateTimer)), userInfo: nil, repeats: true)
@@ -96,6 +97,9 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             self.velocity = self.velocity <= 40 ? self.velocity + 1 : self.velocity
             
             self.objectsTimeInterval = (self.objectsTimeInterval >= 1) ? self.objectsTimeInterval - 0.2 : self.objectsTimeInterval
+            
+            waveTimer.invalidate()
+            waveTimer = Timer.scheduledTimer(timeInterval: TimeInterval(objectsTimeInterval/2), target: self, selector: #selector(GameScene.createLakeWave), userInfo: nil, repeats: true)
             
             treeTimer.invalidate()
             treeTimer = Timer.scheduledTimer(timeInterval: TimeInterval(objectsTimeInterval), target: self, selector: #selector(GameScene.treeObstacles), userInfo: nil, repeats: true)
@@ -197,10 +201,10 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         } else if contact.bodyA.node?.name == "donut" && contact.bodyB.node?.name == "whalePlayer" {
             firstBody = contact.bodyA
             gotADonut = true
-        } else if contact.bodyA.node?.name == "whalePlayer" && (contact.bodyB.node?.name != "landLeft" &&  contact.bodyB.node?.name != "landRight") {
-            firstBody = contact.bodyA
-        } else if contact.bodyB.node?.name == "whalePlayer" && (contact.bodyA.node?.name != "landLeft" &&  contact.bodyA.node?.name != "landRight") {
-            firstBody = contact.bodyB
+//        } else if contact.bodyA.node?.name == "whalePlayer" && (contact.bodyB.node?.name != "landLeft" &&  contact.bodyB.node?.name != "landRight") {
+//            firstBody = contact.bodyA
+//        } else if contact.bodyB.node?.name == "whalePlayer" && (contact.bodyA.node?.name != "landLeft" &&  contact.bodyA.node?.name != "landRight") {
+//            firstBody = contact.bodyB
         } else {
             firstBody = nil // Player hit the land, so nothing happens
         }
@@ -332,7 +336,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     func showGameObjects() {
         enumerateChildNodes(withName: "lakeWave", using: { (lakeWave, stop) in
           let wave = lakeWave as! SKShapeNode
-            wave.position.y -= 20 + CGFloat(self.timePassed/10)
+            wave.position.y -= 20 + CGFloat(self.velocity/2)
             
             let randomNum = Int.random(in: 1...2)
             if randomNum == 1 {
