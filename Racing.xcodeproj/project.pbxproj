@@ -15,6 +15,8 @@
 		DA022FB621800F0400F6D2A5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DA022FB521800F0400F6D2A5 /* Assets.xcassets */; };
 		DA022FB921800F0400F6D2A5 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = DA022FB721800F0400F6D2A5 /* LaunchScreen.storyboard */; };
 		DA022FC32180166900F6D2A5 /* Credits.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA022FC22180166900F6D2A5 /* Credits.swift */; };
+		DA613364219BC612009525E3 /* Credits.sks in Resources */ = {isa = PBXBuildFile; fileRef = DA613363219BC612009525E3 /* Credits.sks */; };
+		DA613366219BCD58009525E3 /* sett-cred-music.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = DA613365219BCD58009525E3 /* sett-cred-music.mp3 */; };
 		DA634A042187F8EA006FA1F0 /* Game-Menu-Music.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = DA634A032187F8EA006FA1F0 /* Game-Menu-Music.mp3 */; };
 		DA634A062187FA32006FA1F0 /* Gameplay-Music.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = DA634A052187FA32006FA1F0 /* Gameplay-Music.mp3 */; };
 		DA634A092187FE4D006FA1F0 /* demage-sound.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = DA634A072187FE4D006FA1F0 /* demage-sound.mp3 */; };
@@ -24,9 +26,7 @@
 		DA8A9FC921829DBA00610124 /* GameMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA8A9FC821829DBA00610124 /* GameMenu.swift */; };
 		DA979C7C2192A4BD00623D3E /* ConfigurationMenu.sks in Resources */ = {isa = PBXBuildFile; fileRef = DA979C7B2192A4BD00623D3E /* ConfigurationMenu.sks */; };
 		DA979C7E2192A4CF00623D3E /* ConfigurationMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA979C7D2192A4CF00623D3E /* ConfigurationMenu.swift */; };
-		DAF12FDD2193D0D30057F148 /* Player.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAF12FDC2193D0D30057F148 /* Player.swift */; };
 		DAF12FDF2193F5D70057F148 /* ObjectsTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAF12FDE2193F5D70057F148 /* ObjectsTimer.swift */; };
-		DAF12FE12193F7AC0057F148 /* Menu.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAF12FE02193F7AC0057F148 /* Menu.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -40,6 +40,8 @@
 		DA022FB821800F0400F6D2A5 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		DA022FBA21800F0400F6D2A5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		DA022FC22180166900F6D2A5 /* Credits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Credits.swift; sourceTree = "<group>"; };
+		DA613363219BC612009525E3 /* Credits.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = Credits.sks; sourceTree = "<group>"; };
+		DA613365219BCD58009525E3 /* sett-cred-music.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "sett-cred-music.mp3"; sourceTree = "<group>"; };
 		DA634A032187F8EA006FA1F0 /* Game-Menu-Music.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "Game-Menu-Music.mp3"; sourceTree = "<group>"; };
 		DA634A052187FA32006FA1F0 /* Gameplay-Music.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "Gameplay-Music.mp3"; sourceTree = "<group>"; };
 		DA634A072187FE4D006FA1F0 /* demage-sound.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = "demage-sound.mp3"; sourceTree = "<group>"; };
@@ -49,9 +51,7 @@
 		DA8A9FC821829DBA00610124 /* GameMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameMenu.swift; sourceTree = "<group>"; };
 		DA979C7B2192A4BD00623D3E /* ConfigurationMenu.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = ConfigurationMenu.sks; sourceTree = "<group>"; };
 		DA979C7D2192A4CF00623D3E /* ConfigurationMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigurationMenu.swift; sourceTree = "<group>"; };
-		DAF12FDC2193D0D30057F148 /* Player.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Player.swift; sourceTree = "<group>"; };
 		DAF12FDE2193F5D70057F148 /* ObjectsTimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObjectsTimer.swift; sourceTree = "<group>"; };
-		DAF12FE02193F7AC0057F148 /* Menu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Menu.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -100,11 +100,8 @@
 		DAF12FDB2193CFC80057F148 /* GameObjects */ = {
 			isa = PBXGroup;
 			children = (
-				DA022FC22180166900F6D2A5 /* Credits.swift */,
 				DA8A9FC42182988100610124 /* Helper.swift */,
 				DAF12FDE2193F5D70057F148 /* ObjectsTimer.swift */,
-				DAF12FDC2193D0D30057F148 /* Player.swift */,
-				DAF12FE02193F7AC0057F148 /* Menu.swift */,
 			);
 			name = GameObjects;
 			sourceTree = "<group>";
@@ -116,6 +113,7 @@
 				DA634A052187FA32006FA1F0 /* Gameplay-Music.mp3 */,
 				DA634A082187FE4D006FA1F0 /* coin-sound.mp3 */,
 				DA634A072187FE4D006FA1F0 /* demage-sound.mp3 */,
+				DA613365219BCD58009525E3 /* sett-cred-music.mp3 */,
 			);
 			name = Assets;
 			sourceTree = "<group>";
@@ -129,6 +127,8 @@
 				DA8A9FC821829DBA00610124 /* GameMenu.swift */,
 				DA979C7B2192A4BD00623D3E /* ConfigurationMenu.sks */,
 				DA979C7D2192A4CF00623D3E /* ConfigurationMenu.swift */,
+				DA613363219BC612009525E3 /* Credits.sks */,
+				DA022FC22180166900F6D2A5 /* Credits.swift */,
 			);
 			name = Scenes;
 			sourceTree = "<group>";
@@ -197,9 +197,11 @@
 				DA022FAB21800EFE00F6D2A5 /* GameScene.sks in Resources */,
 				DA634A092187FE4D006FA1F0 /* demage-sound.mp3 in Resources */,
 				DA022FB621800F0400F6D2A5 /* Assets.xcassets in Resources */,
+				DA613366219BCD58009525E3 /* sett-cred-music.mp3 in Resources */,
 				DA634A042187F8EA006FA1F0 /* Game-Menu-Music.mp3 in Resources */,
 				DA979C7C2192A4BD00623D3E /* ConfigurationMenu.sks in Resources */,
 				DA634A0A2187FE4D006FA1F0 /* coin-sound.mp3 in Resources */,
+				DA613364219BC612009525E3 /* Credits.sks in Resources */,
 				DA022FB921800F0400F6D2A5 /* LaunchScreen.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -215,8 +217,6 @@
 				DA022FB121800EFE00F6D2A5 /* GameViewController.swift in Sources */,
 				DA8A9FC52182988100610124 /* Helper.swift in Sources */,
 				DA022FC32180166900F6D2A5 /* Credits.swift in Sources */,
-				DAF12FE12193F7AC0057F148 /* Menu.swift in Sources */,
-				DAF12FDD2193D0D30057F148 /* Player.swift in Sources */,
 				DAF12FDF2193F5D70057F148 /* ObjectsTimer.swift in Sources */,
 				DA8A9FC921829DBA00610124 /* GameMenu.swift in Sources */,
 				DA979C7E2192A4CF00623D3E /* ConfigurationMenu.swift in Sources */,

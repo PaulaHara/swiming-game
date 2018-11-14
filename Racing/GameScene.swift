@@ -22,7 +22,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var landRight = SKSpriteNode()
     var landLeft = SKSpriteNode()
     var donut = SKSpriteNode()
-    var configuration = SKSpriteNode()
     var pauseBtn = SKSpriteNode()
     
     var pauseScreen = SKSpriteNode()
@@ -51,8 +50,19 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     var gameIsPaused = true
     
     let gameObjects = ObjectsTimer()
-    let menu = Menu()
         
+    fileprivate func playGameBackgroundMusic() {
+        if let path = Bundle.main.path(forResource: "Gameplay-Music", ofType: ".mp3") {
+            let url = URL(fileURLWithPath: path)
+            self.audioPlayer = try? AVAudioPlayer(contentsOf: url)
+            
+            if let audio = self.audioPlayer {
+                audio.play()
+                audio.numberOfLoops = -1
+            }
+        }
+    }
+    
     override func didMove(to view: SKView) {
         self.anchorPoint = CGPoint(x: 0.5, y: 0.5)
         addChild(gameLayer)
@@ -62,25 +72,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         
         gameObjects.triggerAllTimers(objectsTimeInterval: objectsTimeInterval, mainNode: gameLayer, target: self)
         
-        // This will delay for 1 second the starting of the music
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            if let path = Bundle.main.path(forResource: "Gameplay-Music", ofType: ".mp3") {
-                let url = URL(fileURLWithPath: path)
-                self.audioPlayer = try? AVAudioPlayer(contentsOf: url)
-                
-                if let audio = self.audioPlayer {
-                    audio.play()
-                    audio.numberOfLoops = -1
-                }
+        if !userDefaults.bool(forKey: "muteMusic") {
+            // This will delay for 1 second the starting of the music
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                self.playGameBackgroundMusic()
             }
         }
-        
-        // Accelerometer - Test
-//        motionManager.startAccelerometerUpdates()
-//        motionManager.accelerometerUpdateInterval = 0.1
-//        motionManager.startAccelerometerUpdates(to: OperationQueue.current!) { (data, error) in
-//            self.physicsWorld.gravity = CGVector(dx: CGFloat((data?.acceleration.x)!) * 10, dy: CGFloat((data?.acceleration.y)!) * 10)
-//        }
     }
     
     override func update(_ currentTime: TimeInterval) {
@@ -184,17 +181,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
                 joystickInUse = false
             }
             
-            // passar pro menu inicial
-//            if configuration.frame.contains(location) {
-//                menu.openConfig(scene: self, gameLayer: gameLayer)
-//                //openConfig()
-//            }
-//
-//            if continueBtn.frame.contains(location) {
-//                menu.closeConfig(gameLayer: gameLayer)
-//                //closeConfig()
-//            }
-            
             if pauseBtn.frame.contains(location) {
                 pauseScreen.alpha = 0.7
                 continueBtn.alpha = 0.8
@@ -216,16 +202,6 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
     
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
-        // Move happens by touching and dragging the whale
-//        for touch in touches {
-//            let location = touch.location(in: self)
-//
-//            if location.x <= lakeBorderR && location.x >= lakeBorderL {
-//                whalePlayer.position.x = location.x
-//            }
-//            whalePlayer.position.y = location.y
-//        }
-        
         // Move happens using the joystick
         for touch in touches {
             let location = touch.location(in: self)
@@ -318,16 +294,8 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
 }
 
 extension GameScene {
-    func shouldMuteMusic() -> Bool {
-        return userDefaults.bool(forKey: "muteMusic")
-    }
-    
-    func shouldMuteSound() -> Bool {
-        return userDefaults.bool(forKey: "muteSound")
-    }
-    
     func playSoundEffects(soundName: String, type: String) {
-        if shouldMuteMusic() {
+        if !userDefaults.bool(forKey: "muteSound") {
             if let path = Bundle.main.path(forResource: soundName, ofType: type) {
                 let url = URL(fileURLWithPath: path)
                 soundEffects = try? AVAudioPlayer(contentsOf: url)
@@ -345,7 +313,6 @@ extension GameScene {
         whalePlayer = self.childNode(withName: "whalePlayer") as! SKSpriteNode
         landRight = self.childNode(withName: "landRight") as! SKSpriteNode
         landLeft = self.childNode(withName: "landLeft") as! SKSpriteNode
-        configuration = self.childNode(withName: "configuration") as! SKSpriteNode
         pauseBtn = self.childNode(withName: "pause") as! SKSpriteNode
         pauseScreen = self.childNode(withName: "pauseScreen") as! SKSpriteNode
         pauseText = self.childNode(withName: "pauseText") as! SKLabelNode
@@ -360,12 +327,8 @@ extension GameScene {
         landLeft.zPosition = 10
         whalePlayer.zPosition = 10
         
-        configuration.position.x = UIScreen.main.bounds.maxX - CGFloat(110)
-        configuration.position.y = -(UIScreen.main.bounds.maxY - CGFloat(200))
-        configuration.zPosition = 10
-        
         pauseBtn.position.x = UIScreen.main.bounds.maxX - CGFloat(110)
-        pauseBtn.position.y = UIScreen.main.bounds.maxY - CGFloat(200)
+        pauseBtn.position.y = -(UIScreen.main.bounds.maxY - CGFloat(200))
         pauseBtn.zPosition = 10
         
         LakeBorder.lakeMaxX = UIScreen.main.bounds.maxX - landRight.size.width

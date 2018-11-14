@@ -15,11 +15,23 @@ class GameMenu: SKScene {
     let userDefaults = UserDefaults()
     
     var startGame = SKSpriteNode()
-    var settings = SKSpriteNode()
     var highScore = SKLabelNode()
     var currentScore = SKLabelNode()
     
     var audioPlayer: AVAudioPlayer?
+    
+    fileprivate func playsBackgroundMusic() {
+        // Will delay for 1 second the starting of the music
+        if let path = Bundle.main.path(forResource: "Game-Menu-Music", ofType: ".mp3") {
+            let url = URL(fileURLWithPath: path)
+            self.audioPlayer = try? AVAudioPlayer(contentsOf: url)
+            
+            if let player = self.audioPlayer {
+                player.play()
+                player.numberOfLoops = -1
+            }
+        }
+    }
     
     override func didMove(to view: SKView) {
         self.anchorPoint = CGPoint(x: 0.5, y: 0.5)
@@ -30,15 +42,9 @@ class GameMenu: SKScene {
         highScore.text = "High Score: \(userDefaults.integer(forKey: "highscore"))"
         currentScore.text = "Your Score: \(ScoreType.currentScore)"
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { // Will delay for 1 second the starting of the music
-            if let path = Bundle.main.path(forResource: "Game-Menu-Music", ofType: ".mp3") {
-                let url = URL(fileURLWithPath: path)
-                self.audioPlayer = try? AVAudioPlayer(contentsOf: url)
-                
-                if let player = self.audioPlayer {
-                    player.play()
-                    player.numberOfLoops = -1
-                }
+        if !userDefaults.bool(forKey: "muteMusic") {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                self.playsBackgroundMusic()
             }
         }
     }
@@ -57,6 +63,12 @@ class GameMenu: SKScene {
                 let settingsScene = SKScene(fileNamed: "ConfigurationMenu")!
                 settingsScene.scaleMode = .aspectFill
                 view?.presentScene(settingsScene, transition: SKTransition.fade(withDuration: TimeInterval(1)))
+            }
+            
+            if atPoint(touchLocation).name == "credits" {
+                let creditsScene = SKScene(fileNamed: "Credits")!
+                creditsScene.scaleMode = .aspectFill
+                view?.presentScene(creditsScene, transition: SKTransition.fade(withDuration: TimeInterval(1)))
             }
         }
     }
