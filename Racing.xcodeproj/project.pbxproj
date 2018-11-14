@@ -24,6 +24,9 @@
 		DA8A9FC921829DBA00610124 /* GameMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA8A9FC821829DBA00610124 /* GameMenu.swift */; };
 		DA979C7C2192A4BD00623D3E /* ConfigurationMenu.sks in Resources */ = {isa = PBXBuildFile; fileRef = DA979C7B2192A4BD00623D3E /* ConfigurationMenu.sks */; };
 		DA979C7E2192A4CF00623D3E /* ConfigurationMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA979C7D2192A4CF00623D3E /* ConfigurationMenu.swift */; };
+		DAF12FDD2193D0D30057F148 /* Player.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAF12FDC2193D0D30057F148 /* Player.swift */; };
+		DAF12FDF2193F5D70057F148 /* ObjectsTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAF12FDE2193F5D70057F148 /* ObjectsTimer.swift */; };
+		DAF12FE12193F7AC0057F148 /* Menu.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAF12FE02193F7AC0057F148 /* Menu.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -46,6 +49,9 @@
 		DA8A9FC821829DBA00610124 /* GameMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameMenu.swift; sourceTree = "<group>"; };
 		DA979C7B2192A4BD00623D3E /* ConfigurationMenu.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = ConfigurationMenu.sks; sourceTree = "<group>"; };
 		DA979C7D2192A4CF00623D3E /* ConfigurationMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigurationMenu.swift; sourceTree = "<group>"; };
+		DAF12FDC2193D0D30057F148 /* Player.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Player.swift; sourceTree = "<group>"; };
+		DAF12FDE2193F5D70057F148 /* ObjectsTimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObjectsTimer.swift; sourceTree = "<group>"; };
+		DAF12FE02193F7AC0057F148 /* Menu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Menu.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -78,26 +84,53 @@
 		DA022FA721800EFE00F6D2A5 /* Racing */ = {
 			isa = PBXGroup;
 			children = (
+				DAF1300A2195266C0057F148 /* Scenes */,
+				DAF12FDB2193CFC80057F148 /* GameObjects */,
+				DAF13009219525A30057F148 /* Assets */,
 				DA022FA821800EFE00F6D2A5 /* AppDelegate.swift */,
-				DA022FAA21800EFE00F6D2A5 /* GameScene.sks */,
-				DA022FAE21800EFE00F6D2A5 /* GameScene.swift */,
 				DA022FB021800EFE00F6D2A5 /* GameViewController.swift */,
 				DA022FB221800EFE00F6D2A5 /* Main.storyboard */,
 				DA022FB521800F0400F6D2A5 /* Assets.xcassets */,
 				DA022FB721800F0400F6D2A5 /* LaunchScreen.storyboard */,
 				DA022FBA21800F0400F6D2A5 /* Info.plist */,
+			);
+			path = Racing;
+			sourceTree = "<group>";
+		};
+		DAF12FDB2193CFC80057F148 /* GameObjects */ = {
+			isa = PBXGroup;
+			children = (
 				DA022FC22180166900F6D2A5 /* Credits.swift */,
 				DA8A9FC42182988100610124 /* Helper.swift */,
-				DA8A9FC621829DAB00610124 /* GameMenu.sks */,
-				DA8A9FC821829DBA00610124 /* GameMenu.swift */,
+				DAF12FDE2193F5D70057F148 /* ObjectsTimer.swift */,
+				DAF12FDC2193D0D30057F148 /* Player.swift */,
+				DAF12FE02193F7AC0057F148 /* Menu.swift */,
+			);
+			name = GameObjects;
+			sourceTree = "<group>";
+		};
+		DAF13009219525A30057F148 /* Assets */ = {
+			isa = PBXGroup;
+			children = (
 				DA634A032187F8EA006FA1F0 /* Game-Menu-Music.mp3 */,
 				DA634A052187FA32006FA1F0 /* Gameplay-Music.mp3 */,
 				DA634A082187FE4D006FA1F0 /* coin-sound.mp3 */,
 				DA634A072187FE4D006FA1F0 /* demage-sound.mp3 */,
+			);
+			name = Assets;
+			sourceTree = "<group>";
+		};
+		DAF1300A2195266C0057F148 /* Scenes */ = {
+			isa = PBXGroup;
+			children = (
+				DA022FAA21800EFE00F6D2A5 /* GameScene.sks */,
+				DA022FAE21800EFE00F6D2A5 /* GameScene.swift */,
+				DA8A9FC621829DAB00610124 /* GameMenu.sks */,
+				DA8A9FC821829DBA00610124 /* GameMenu.swift */,
 				DA979C7B2192A4BD00623D3E /* ConfigurationMenu.sks */,
 				DA979C7D2192A4CF00623D3E /* ConfigurationMenu.swift */,
 			);
-			path = Racing;
+			name = Scenes;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -182,6 +215,9 @@
 				DA022FB121800EFE00F6D2A5 /* GameViewController.swift in Sources */,
 				DA8A9FC52182988100610124 /* Helper.swift in Sources */,
 				DA022FC32180166900F6D2A5 /* Credits.swift in Sources */,
+				DAF12FE12193F7AC0057F148 /* Menu.swift in Sources */,
+				DAF12FDD2193D0D30057F148 /* Player.swift in Sources */,
+				DAF12FDF2193F5D70057F148 /* ObjectsTimer.swift in Sources */,
 				DA8A9FC921829DBA00610124 /* GameMenu.swift in Sources */,
 				DA979C7E2192A4CF00623D3E /* ConfigurationMenu.swift in Sources */,
 				DA022FA921800EFE00F6D2A5 /* AppDelegate.swift in Sources */,

@@ -7,6 +7,18 @@
 //
 
 import Foundation
+import SpriteKit
+
+struct LakeBorder {
+    static var lakeMinX = CGFloat()
+    static var lakeMaxX = CGFloat()
+    static var lakeMaxY = CGFloat()
+    static var lakeMinY = CGFloat()
+    static var lakeBorderR = CGFloat()
+    static var lakeBorderL = CGFloat()
+    static var lakeBorderBottom = CGFloat()
+    static var lakeBorderUp = CGFloat()
+}
 
 struct ColliderType {
     static let PLAYER_COLLIDER : UInt32 = 0

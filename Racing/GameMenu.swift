@@ -12,7 +12,10 @@ import AVFoundation
 
 class GameMenu: SKScene {
     
+    let userDefaults = UserDefaults()
+    
     var startGame = SKSpriteNode()
+    var settings = SKSpriteNode()
     var highScore = SKLabelNode()
     var currentScore = SKLabelNode()
     
@@ -20,10 +23,11 @@ class GameMenu: SKScene {
     
     override func didMove(to view: SKView) {
         self.anchorPoint = CGPoint(x: 0.5, y: 0.5)
+        
         startGame = self.childNode(withName: "startGame") as! SKSpriteNode
         highScore = self.childNode(withName: "highscore") as! SKLabelNode
         currentScore = self.childNode(withName: "currentScore") as! SKLabelNode
-        highScore.text = "High Score: \(ScoreType.highScore)"
+        highScore.text = "High Score: \(userDefaults.integer(forKey: "highscore"))"
         currentScore.text = "Your Score: \(ScoreType.currentScore)"
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) { // Will delay for 1 second the starting of the music
@@ -42,10 +46,17 @@ class GameMenu: SKScene {
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         for touch in touches {
             let touchLocation = touch.location(in: self)
+            
             if atPoint(touchLocation).name == "startGame" {
                 let gameScene = SKScene(fileNamed: "GameScene")!
                 gameScene.scaleMode = .aspectFill
                 view?.presentScene(gameScene, transition: SKTransition.fade(withDuration: TimeInterval(1)))
+            }
+            
+            if atPoint(touchLocation).name == "settings" {
+                let settingsScene = SKScene(fileNamed: "ConfigurationMenu")!
+                settingsScene.scaleMode = .aspectFill
+                view?.presentScene(settingsScene, transition: SKTransition.fade(withDuration: TimeInterval(1)))
             }
         }
     }
